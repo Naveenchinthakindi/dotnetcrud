@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using StudentApi.Models.Request;
-using StudentApi.Services.Interfaces;
+using MySql.Data.MySqlClient;
+using StudentApi.Data;
+using StudentApi.Models;
 
 namespace StudentApi.Controllers
 {
@@ -8,69 +9,148 @@ namespace StudentApi.Controllers
     [Route("api/[controller]")]
     public class StudentController : ControllerBase
     {
-        private readonly IStudentService _studentService;
+        private readonly DbConnection _dbConnection;
 
-        public StudentController(IStudentService studentService)
+        // Inject the single database connection helper
+        public StudentController(DbConnection dbConnection)
         {
-            _studentService = studentService;
+            _dbConnection = dbConnection;
         }
 
-        // GET: api/Student
+        // 1. GET ALL STUDENTS: GET /api/Student
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllStudents()
         {
-            var students = await _studentService.GetAllStudentsAsync();
+            var students = new List<StudentResponse>();
+            const string query = "SELECT id, name, email, age FROM students";
+
+            await using var connection = _dbConnection.GetConnection();
+            await connection.OpenAsync();
+
+            await using var command = new MySqlCommand(query, connection);
+            await using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                students.Add(new StudentResponse
+                {
+                    Id = Convert.ToInt32(reader["id"]),
+                    Name = reader["name"].ToString() ?? string.Empty,
+                    Email = reader["email"].ToString() ?? string.Empty,
+                    Age = Convert.ToInt32(reader["age"])
+                });
+            }
+
             return Ok(students);
         }
 
-        // GET: api/Student/1
+        // 2. GET STUDENT BY ID: GET /api/Student/{id}
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetStudentById(int id)
         {
-            var student = await _studentService.GetStudentByIdAsync(id);
+            const string query = "SELECT id, name, email, age FROM students WHERE id = @Id";
 
-            if (student == null)
+            await using var connection = _dbConnection.GetConnection();
+            await connection.OpenAsync();
+
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
             {
-                return NotFound($"Student with ID {id} not found.");
+                var student = new StudentResponse
+                {
+                    Id = Convert.ToInt32(reader["id"]),
+                    Name = reader["name"].ToString() ?? string.Empty,
+                    Email = reader["email"].ToString() ?? string.Empty,
+                    Age = Convert.ToInt32(reader["age"])
+                };
+
+                return Ok(student);
             }
 
-            return Ok(student);
+            return NotFound($"Student with ID {id} not found.");
         }
 
-        // POST: api/Student
+        // 3. ADD STUDENT: POST /api/Student
         [HttpPost]
-        public async Task<IActionResult> Add([FromBody] AddStudentRequest request)
+        public async Task<IActionResult> AddStudent([FromBody] AddStudentRequest request)
         {
-            var student = await _studentService.AddStudentAsync(request);
+            const string query = "INSERT INTO students (name, email, age) VALUES (@Name, @Email, @Age);";
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = student.Id },
-                student
-            );
+            await using var connection = _dbConnection.GetConnection();
+            await connection.OpenAsync();
+
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Name", request.Name);
+            command.Parameters.AddWithValue("@Email", request.Email);
+            command.Parameters.AddWithValue("@Age", request.Age);
+
+            await command.ExecuteNonQueryAsync();
+
+            int newId = (int)command.LastInsertedId;
+
+            var response = new StudentResponse
+            {
+                Id = newId,
+                Name = request.Name,
+                Email = request.Email,
+                Age = request.Age
+            };
+
+            return CreatedAtAction(nameof(GetStudentById), new { id = newId }, response);
         }
 
-        // PUT: api/Student/1
+        // 4. UPDATE STUDENT: PUT /api/Student/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentRequest request)
+        public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentRequest request)
         {
-            var updatedStudent = await _studentService.UpdateStudentAsync(id, request);
+            const string query = "UPDATE students SET name = @Name, email = @Email, age = @Age WHERE id = @Id";
 
-            if (updatedStudent == null)
+            await using var connection = _dbConnection.GetConnection();
+            await connection.OpenAsync();
+
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Id", id);
+            command.Parameters.AddWithValue("@Name", request.Name);
+            command.Parameters.AddWithValue("@Email", request.Email);
+            command.Parameters.AddWithValue("@Age", request.Age);
+
+            int rowsAffected = await command.ExecuteNonQueryAsync();
+
+            if (rowsAffected == 0)
             {
                 return NotFound($"Student with ID {id} not found.");
             }
 
-            return Ok(updatedStudent);
+            var response = new StudentResponse
+            {
+                Id = id,
+                Name = request.Name,
+                Email = request.Email,
+                Age = request.Age
+            };
+
+            return Ok(response);
         }
 
-        // DELETE: api/Student/1
+        // 5. DELETE STUDENT: DELETE /api/Student/{id}
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteStudent(int id)
         {
-            var deleted = await _studentService.DeleteStudentAsync(id);
+            const string query = "DELETE FROM students WHERE id = @Id";
 
-            if (!deleted)
+            await using var connection = _dbConnection.GetConnection();
+            await connection.OpenAsync();
+
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            int rowsAffected = await command.ExecuteNonQueryAsync();
+
+            if (rowsAffected == 0)
             {
                 return NotFound($"Student with ID {id} not found.");
             }

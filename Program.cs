@@ -1,7 +1,4 @@
-using StudentApi.DAL.Implementations;
-using StudentApi.DAL.Interfaces;
-using StudentApi.Services.Implementations;
-using StudentApi.Services.Interfaces;
+using StudentApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,14 +7,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database Connection Factory
-builder.Services.AddSingleton<MySqlConnectionFactory>();
-
-// DAL
-builder.Services.AddScoped<IStudentDataAccess, StudentDataAccess>();
-
-// Services
-builder.Services.AddScoped<IStudentService, StudentService>();
+// Register single Database Connection helper
+builder.Services.AddSingleton<DbConnection>();
 
 var app = builder.Build();
 
