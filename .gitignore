@@ -1,0 +1,49 @@
+## Build and output directories
+[Bb]in/
+[Oo]bj/
+out/
+build/
+.local/
+Library/
+
+## Visual Studio / IDEs / Editors
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## macOS / OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+## Rider
+*.sln.iml
+
+## User-specific files
+*.rsuser
+
+## Package / dependency cache
+packages/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Logs and test results
+*.log
+TestResults/
+[Tt]est[Rr]esult*/
+
+## Dotnet crash dumps
+*.dmp
+*.mdmp
