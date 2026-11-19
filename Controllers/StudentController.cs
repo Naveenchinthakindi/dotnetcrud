@@ -22,7 +22,7 @@ namespace StudentApi.Controllers
         public async Task<IActionResult> GetAllStudents()
         {
             var students = new List<StudentResponse>();
-            const string query = "SELECT id, name, email, age FROM students";
+            const string query = "SELECT * FROM students";
 
             await using var connection = _dbConnection.GetConnection();
             await connection.OpenAsync();

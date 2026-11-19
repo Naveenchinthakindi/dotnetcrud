@@ -12,6 +12,9 @@ builder.Services.AddSingleton<DbConnection>();
 
 var app = builder.Build();
 
+var db = app.Services.GetRequiredService<DbConnection>();
+await db.CheckConnection();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
