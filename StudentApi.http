@@ -31,3 +31,25 @@ Content-Type: application/json
 ### 5. Delete Student
 DELETE {{StudentApi_HostAddress}}/api/Student/1
 Accept: application/json
+
+
+### 6. Get All SAP Vendors
+GET {{StudentApi_HostAddress}}/api/Vendor
+Accept: application/json
+
+### 7. Get SAP Vendor By Code
+GET {{StudentApi_HostAddress}}/api/Vendor/VOS00102
+Accept: application/json
+
+
+### 8. Get All Open Purchase Orders
+GET {{StudentApi_HostAddress}}/api/PurchaseOrder/open
+Accept: application/json
+
+### 9. Get Open Purchase Orders for Specific Vendor
+GET {{StudentApi_HostAddress}}/api/PurchaseOrder/open?vendorCode=VRM00001
+Accept: application/json
+
+### 10. Get Purchase Order Details by DocEntry
+GET {{StudentApi_HostAddress}}/api/PurchaseOrder/1
+Accept: application/json
